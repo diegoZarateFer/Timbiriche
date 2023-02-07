@@ -9,6 +9,10 @@ class Board:
         self.dots = self.create_dots()
         self.cells = self.create_cells()
         self.mouse_listener = True
+        self.completed_cells = 0
+        
+        self.current_player = 'A'
+        self.scores = {'A' : 0, 'B': 0}
 
     def create_dots(self):
         dots = []
@@ -72,6 +76,7 @@ class Board:
     
     def check_adjacent(self,x,y):
         opposite = {0:2,1:3,2:0,3:1}
+        other_player = {'A':'B','B':'A'}
         for i in range(len(self.selected_dot.adjacent_dots)):
             dot = self.selected_dot.adjacent_dots[i]
             if dot != None and dot.handle_left_click(x,y):
@@ -81,13 +86,24 @@ class Board:
                 self.selected_dot.make_normal()
                 self.unmake_options()
                 self.selected_dot = None
+
+                completed_squares = 0
+                for cell_row in self.cells:
+                    for cell in cell_row:
+                        if cell.update(self.current_player):
+                            completed_squares += 1
+                
+                if completed_squares == 0:
+                    self.current_player = other_player[self.current_player]
+                else:
+                    self.scores[self.current_player] += completed_squares
+                    self.completed_cells += completed_squares
+                
                 return
+
 
     def update(self):
         self.check_hover()
-        for cell_row in self.cells:
-            for cell in cell_row:
-                cell.update()
     
     def handle_events(self):
         if self.mouse_listener:
@@ -106,11 +122,28 @@ class Board:
                     self.selected_dot = None
                 self.mouse_listener = False
 
+    def draw_text(self,surf,text,size,x,y,color):
+        font = pg.font.Font(font_name,size)
+        text_surface = font.render(text,True,color)
+        text_rect = text_surface.get_rect()
+        text_rect.midtop = (x,y)
+        surf.blit(text_surface,text_rect)
+
     def draw(self,screen):
-        for dots_row in self.dots:
-            for dot in dots_row:
-                dot.draw(screen)
+        if self.completed_cells == (ROWS - 1) * (DOTS_PER_ROW - 1):
+            if self.scores['A'] > self.scores['B']:
+                self.draw_text(screen,'Player A wins!!',TEXT_SIZE,TURN_INFO_X,TEXT_Y,BLACK)
+            else:
+                self.draw_text(screen,'Player B wins!!',TEXT_SIZE,TURN_INFO_X,TEXT_Y,BLACK)
+        else:
+            self.draw_text(screen,'Player {} moves'.format(self.current_player),TEXT_SIZE,TURN_INFO_X,TEXT_Y,BLACK)
+            self.draw_text(screen,'A score: {}'.format(self.scores['A']),TEXT_SIZE,SCORE_A_X,TEXT_Y,BLACK)
+            self.draw_text(screen,'B score: {}'.format(self.scores['B']),TEXT_SIZE,SCORE_B_X,TEXT_Y,BLACK)
 
         for cell_row in self.cells:
             for cell in cell_row:
                 cell.draw(screen)
+
+        for dots_row in self.dots:
+            for dot in dots_row:
+                dot.draw(screen)

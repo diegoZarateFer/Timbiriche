@@ -33,6 +33,7 @@ class Game:
         self.board.handle_events()
     
     def draw(self):
+        self.screen.fill(WHITE)
         self.board.draw(self.screen)
         pg.display.flip()
 
