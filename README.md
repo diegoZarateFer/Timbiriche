@@ -1,2 +1,2 @@
 # Timbiriche
-Recreated the game "Tmbiriche" with python.
+Recreated the game "Timbiriche" with python.
